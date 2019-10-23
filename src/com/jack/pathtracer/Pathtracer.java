@@ -7,12 +7,13 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 
+import com.jack.pathtracer.math.Ray;
 import com.jack.pathtracer.math.Vec3;
 import com.jack.pathtracer.scene.Camera;
 import com.jack.pathtracer.scene.Material;
 import com.jack.pathtracer.scene.Scene;
 import com.jack.pathtracer.scene.Scene.SceneSettings;
-import com.jack.pathtracer.scene.objects.Plane;
+import com.jack.pathtracer.scene.gen.RoomGenerator;
 import com.jack.pathtracer.scene.objects.Sphere;
 
 public class Pathtracer {
@@ -23,7 +24,7 @@ public class Pathtracer {
 		
 		int width = parseInt(options.get("width"), 1280);
 		int height = parseInt(options.get("height"), 720);
-		int numThreads = parseInt(options.get("num-threads"), 8);
+		boolean hideBar = options.containsKey("hide-bar") ? options.get("hide-bar").equalsIgnoreCase("true") : false;
 		settings.maxBounces = parseInt(options.get("bounces"), 8);
 		settings.numSamples = parseInt(options.get("samples"), 8);
 		settings.skyColor.mul(0f); // make sky black
@@ -31,54 +32,39 @@ public class Pathtracer {
 		Scene scene = new Scene();
 		Camera cam  = new Camera(new Vec3(0f, 0f, -3f));
 		
+		// generate room
+		RoomGenerator.populate(scene, 4f, 2f);
+		
 		// add sphere
 		Material mat = new Material(new Vec3(1f), new Vec3(0f), 0.1f);
 		Sphere sph = new Sphere(new Vec3(0f), 1f, mat);
 		scene.addObject(sph);
 		
 		// add lights
-		Material mat2 = new Material(new Vec3(0f), new Vec3(125f), 0f);
-		Sphere light = new Sphere(new Vec3(2f,1.2f,-0.5f), 0.2f, mat2);
+		Material mat2 = new Material(new Vec3(0f), new Vec3(20f), 0f);
+		Sphere light = new Sphere(new Vec3(2f,1.2f,-0.5f), 0.4f, mat2);
 		scene.addObject(light);
-		
-		// add planes
-		Plane plane = new Plane(new Vec3(0f,1f,0f), new Vec3(0f,-1f,0f), mat);
-		scene.addObject(plane);
-		
-		Material mat3 = new Material(new Vec3(0.9f), new Vec3(0f), 0.95f);
-		Plane plane2 = new Plane(new Vec3(1f,0f,-0.25f), new Vec3(-1.5f,0f,0f), mat3);
-		scene.addObject(plane2);
 		
 		// set up buffer
 		BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 		
 		// draw scene
 		// TODO: move this code to Scene class
-		System.out.print("Starting render... ");
-		long start = System.currentTimeMillis();
-		int totalThreads = numThreads * numThreads;
-		RenderThread[] threads = new RenderThread[totalThreads];
-		int blockWidth = width / numThreads;
-		int blockHeight = height / numThreads;
-		for(int y = 0; y < numThreads; y++) {
-			for(int x = 0; x < numThreads; x++) {
-				int xStart = x * blockWidth;
-				int xEnd = xStart + blockWidth;
-				int yStart = y * blockHeight;
-				int yEnd = yStart + blockHeight;
-				RenderThread thread = new RenderThread(img, cam, settings, scene, xStart, xEnd, yStart, yEnd);
-				thread.start();
-				threads[y*numThreads+x] = thread;
-			}
+		System.out.println("Starting render... ");
+		ProgressBar progress = null;
+		if(!hideBar) {
+			progress = new ProgressBar("samples", width * height * settings.numSamples);
 		}
-		int doneCount = 0;
-		while(doneCount < totalThreads) {
-			doneCount = 0;
-			for(RenderThread thread : threads) {
-				if(thread == null || thread.isDone) doneCount++;
+		long start = System.currentTimeMillis();
+		for(int y = 0; y < height; y++) {
+			for(int x = 0; x < width; x++) {
+				Ray ray = cam.pixelToRay(x, y, width, height);
+				Vec3 col = scene.trace(ray, settings, !hideBar ? progress : null);
+				img.setRGB(x, y, Vec3.toRGB(col));
 			}
 		}
 		long time = System.currentTimeMillis() - start;
+		if(!hideBar) progress.end();
 		System.out.println("Done! Took: " + formatTime(time));
 		
 		// save to file
