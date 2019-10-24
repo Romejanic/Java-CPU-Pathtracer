@@ -23,7 +23,7 @@ public class ProgressBar {
 		if(value > this.max) this.value = this.max;
 		if(this.value != value) {
 			this.value = value;
-			this.repaint();
+			if (value % 1000 == 0) this.repaint();
 		}
 	}
 	
