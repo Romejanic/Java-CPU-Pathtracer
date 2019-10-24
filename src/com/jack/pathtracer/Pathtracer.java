@@ -59,7 +59,7 @@ public class Pathtracer {
 		for(int y = 0; y < height; y++) {
 			for(int x = 0; x < width; x++) {
 				Ray ray = cam.pixelToRay(x, y, width, height);
-				Vec3 col = scene.trace(ray, settings, !hideBar ? progress : null);
+				Vec3 col = scene.trace(ray, settings, progress);
 				img.setRGB(x, y, Vec3.toRGB(col));
 			}
 		}
