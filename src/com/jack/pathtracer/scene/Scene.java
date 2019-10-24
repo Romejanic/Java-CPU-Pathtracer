@@ -63,7 +63,7 @@ public class Scene {
 	 */
 	public Vec3 getRayColor(Ray ray, SceneSettings settings, int depth) {
 		// if we reach max recursion depth, bail out
-		if(depth >= settings.maxBounces) return new Vec3(0f);
+		if(depth > settings.maxBounces) return new Vec3(0f);
 
 		Hit t = this.intersect(ray);
 		if(t.object == null) {
