@@ -63,7 +63,7 @@ public class Scene {
 	 */
 	public Vec3 getRayColor(Ray ray, SceneSettings settings, int depth) {
 		// if we reach max recursion depth, bail out
-		if(depth >= settings.maxBounces) return new Vec3(0f);
+		if(depth > settings.maxBounces) return new Vec3(0f);
 
 		Hit t = this.intersect(ray);
 		if(t.object == null) {
@@ -85,11 +85,12 @@ public class Scene {
 			d.x = 2f * (float)Math.random() - 1f;
 			d.y = 2f * (float)Math.random() - 1f;
 			d.z = 2f * (float)Math.random() - 1f;
+			d = Vec3.normalize(d);
 		} while((shade = Vec3.dot(d, n)) <= 0f);
 
 		ray = new Ray(
 			Vec3.add(p, Vec3.mul(d, 0.01f)), // origin
-			Vec3.normalize(d)                // direction
+			d                                // direction
 		);
 		
 		// adjust mask to add attenuation
