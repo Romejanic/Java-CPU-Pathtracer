@@ -32,18 +32,13 @@ public class Pathtracer {
 		Scene scene = new Scene();
 		Camera cam  = new Camera(new Vec3(0f, 0f, -3f));
 		
-		// generate room
-		RoomGenerator.populate(scene, 4f, 2f);
+		// generate room (and light)
+		RoomGenerator.populate(scene, 4f, 2f, new Material(new Vec3(0f), new Vec3(2f), 0f));
 		
 		// add sphere
 		Material mat = new Material(new Vec3(1f), new Vec3(0f), 0.1f);
-		Sphere sph = new Sphere(new Vec3(0f), 1f, mat);
+		Sphere sph = new Sphere(new Vec3(0f,-1f,0f), 1f, mat);
 		scene.addObject(sph);
-		
-		// add lights
-		Material mat2 = new Material(new Vec3(0f), new Vec3(20f), 0f);
-		Sphere light = new Sphere(new Vec3(2f,1.2f,-0.5f), 0.4f, mat2);
-		scene.addObject(light);
 		
 		// set up buffer
 		BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
